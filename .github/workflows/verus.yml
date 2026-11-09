@@ -1,0 +1,38 @@
+# verus — the PTC checks of verus/ptc.rs, run by hand only (Actions → verus → Run workflow).
+#
+# Verus proves the decision of each check (verus/ptc.rs, inside verus! { }), compiles the checker,
+# and the checker runs its self-test and reads the files of the `files` input. The reader
+# (verus/reader.rs) is not verified; `just verus-test` runs its unit tests first.
+#
+# just comes from Ubuntu 24.04's apt (1.21.0), the version every justfile here must run on.
+name: verus
+
+on:
+  workflow_dispatch:
+    inputs:
+      files:
+        description: "Markdown files to check, separated by spaces"
+        type: string
+        default: README.md
+
+permissions:
+  contents: read
+
+jobs:
+  ptc:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: just from Ubuntu's apt
+        run: sudo apt-get update && sudo apt-get install -y just unzip && just --version
+      - name: The reader's unit tests
+        run: just verus-test
+      - name: Verus proves the checks, then the checker reads the files
+        env:
+          FILES: ${{ inputs.files }}
+        run: |
+          read -ra files <<<"$FILES"
+          just verus "${files[@]}"
