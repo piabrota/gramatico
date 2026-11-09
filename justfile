@@ -567,3 +567,14 @@ icon:
     cat "$art/icon.svg" > site/static/favicon.svg && \
     cat "$art/icon.svg" > app/src-tauri/icons/icon.svg && \
     cat "$art/icon.desmos.json" > docs/drawings/icon.desmos.json
+
+# PTC checks (verus/ptc.rs, a port of h0ffmann/proof's Z3 Ptc.scala): Verus proves the decision, then
+# the checker runs its self-test and reads the files (README.md by default). Linux x86_64 and rustup.
+verus *files:
+    bash scripts/verus.sh {{ files }}
+
+# The unit tests of the PTC reader (verus/reader.rs), plain rustc, no Verus.
+verus-test:
+    mkdir -p verus/.tools
+    rustc --edition 2021 --test verus/reader.rs -o verus/.tools/reader-test
+    verus/.tools/reader-test
